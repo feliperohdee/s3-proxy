@@ -16,7 +16,7 @@ AWS.config.update({
 
 const s3 = new AWS.S3();
 const bucket = process.env.BUCKET || 'static.smallorange.co';
-const folder = process.env.FOLDER || '';
+const folder = process.env.FOLDER || 's3ProxyCache';
 
 exports.handler = (event, context, callback) => {
 	const {
