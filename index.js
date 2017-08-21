@@ -38,7 +38,7 @@ exports.handler = (event, context, callback) => {
 
 	s3.getObject({
 			Bucket: bucket,
-			Key: folder ? `${folder}/${key}` : key
+			Key: `${folder}/${key}`
 		})
 		.promise()
 		.then(({
@@ -55,7 +55,7 @@ exports.handler = (event, context, callback) => {
 					.then(body => {
 						return s3.putObject({
 								Bucket: bucket,
-								Key: folder ? `${folder}/${key}` : key,
+								Key: `${folder}/${key}`,
 								Body: body,
 								ContentType: contentType
 							})
