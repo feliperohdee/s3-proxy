@@ -15,7 +15,7 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-const bucket = process.env.BUCKET;
+const bucket = process.env.BUCKET || 'static.smallorange.co';
 
 exports.handler = (event, context, callback) => {
 	const {
