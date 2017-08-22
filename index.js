@@ -15,8 +15,7 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-const bucket = process.env.BUCKET || 'static.smallorange.co';
-const folder = process.env.FOLDER || 'cache/s3Proxy';
+const bucket = process.env.BUCKET;
 
 exports.handler = (event, context, callback) => {
 	const {
@@ -38,7 +37,7 @@ exports.handler = (event, context, callback) => {
 
 	s3.getObject({
 			Bucket: bucket,
-			Key: `${folder}/${key}`
+			Key: `cache/s3Proxy/${key}`
 		})
 		.promise()
 		.then(({
@@ -55,7 +54,7 @@ exports.handler = (event, context, callback) => {
 					.then(body => {
 						return s3.putObject({
 								Bucket: bucket,
-								Key: `${folder}/${key}`,
+								Key: `cache/s3Proxy/${key}`,
 								Body: body,
 								ContentType: contentType
 							})
