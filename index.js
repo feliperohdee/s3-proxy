@@ -7,6 +7,8 @@ const {
 	parse
 } = require('url');
 
+const parsers = require('./parsers');
+
 AWS.config.setPromisesDependency(Promise);
 AWS.config.update({
 	accessKeyId: process.env.ACCESS_KEY_ID,
@@ -19,25 +21,28 @@ const bucket = process.env.BUCKET || 'static.smallorange.co';
 
 exports.handler = (event, context, callback) => {
 	const {
-		url
+		url,
+		parser = null,
+		base64 = true
 	} = event;
 
 	const {
 		path
 	} = parse(url);
-
-	const hash = md5(path);
+	
+	const parserFn = parsers[parser] || _.identity;
+	const hash = md5(path + parser + base64);
 	const splitted = url.split('.');
 	const extension = splitted.length ? _.last(splitted) : null;
 	const contentType = extension ? mime.lookup(extension) : 'application/octet-stream';
 	const key = extension ? `${hash}.${extension}` : hash;
 
 	const returnsError = err => callback(err);
-	const returns = data => callback(null, data.toString('base64'));
+	const returns = data => callback(null, base64 ? data.toString('base64') : data.toString());
 
 	s3.getObject({
 			Bucket: bucket,
-			Key: `cache/s3Proxy/${key}`
+			Key: `cache/proxy/${key}`
 		})
 		.promise()
 		.then(({
@@ -52,9 +57,18 @@ exports.handler = (event, context, callback) => {
 						body
 					}) => body)
 					.then(body => {
+						body = parserFn(body.toString());
+
+						if(_.isString(body)){
+							return new Buffer(body);
+						}
+
+						return body;
+					})
+					.then(body => {	
 						return s3.putObject({
 								Bucket: bucket,
-								Key: `cache/s3Proxy/${key}`,
+								Key: `cache/proxy/${key}`,
 								Body: body,
 								ContentType: contentType
 							})
@@ -70,10 +84,9 @@ exports.handler = (event, context, callback) => {
 };
 
 if (process.env.NODE_ENV !== 'production') {
-		require('./parseSvg')('http://snapsvg.io/assets/images/logo.svg')
-			.then(console.log);
-
-		// exports.handler({
-		// 	url: 'https://www.google.com.br/logos/doodles/2017/cora-coralinas-128th-birthday-5770712995332096.2-scta.png'
-		// }, null, console.log);
+		exports.handler({
+			url: 'http://static.smallorange.co/svg/noun_1113211_cc.svg',
+			parser: 'svg',
+			base64: false
+		}, null, console.log);
 }
