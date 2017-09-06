@@ -70,7 +70,10 @@ exports.handler = (event, context, callback) => {
 };
 
 if (process.env.NODE_ENV !== 'production') {
-	exports.handler({
-		url: 'https://www.google.com.br/logos/doodles/2017/cora-coralinas-128th-birthday-5770712995332096.2-scta.png'
-	}, null, console.log);
+		require('./parseSvg')('http://snapsvg.io/assets/images/logo.svg')
+			.then(console.log);
+
+		// exports.handler({
+		// 	url: 'https://www.google.com.br/logos/doodles/2017/cora-coralinas-128th-birthday-5770712995332096.2-scta.png'
+		// }, null, console.log);
 }
