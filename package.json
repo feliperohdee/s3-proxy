@@ -1,22 +1,26 @@
 {
-  "name": "s3-proxy",
+  "name": "smallorange-s3-proxy",
   "version": "1.0.0",
   "description": "Small proxy to get stuffs and copy to s3 and retrieve for there",
   "main": "index.js",
   "scripts": {
-    "clean": "rm -rf lambda.zip",
-    "zip": "zip -9 -r --exclude=.git* lambda.zip .",
-    "s3": "aws s3 cp lambda.zip s3://lambdas.smallorange.co/s3Proxy/lambda.zip",
-    "updateLambda": "aws lambda update-function-code --function-name s3Proxy --s3-bucket lambdas.smallorange.co --s3-key s3Proxy/lambda.zip --region us-east-1",
-    "deploy": "npm run clean && npm run zip && npm run s3 && npm run updateLambda; npm run clean"
+    "test": "NODE_ENV=test ./node_modules/.bin/_mocha spec --recursive --watch --timeout 5000",
+    "coverage": "NODE_ENV=test ./node_modules/.bin/istanbul cover -x spec/** ./node_modules/.bin/_mocha -- 'spec' --recursive --timeout 5000",
+    "deploy": "npm version patch -m 'Bump %s' && git push origin master && npm publish"
   },
   "author": "Felipe Rohde",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.100.0",
     "got": "^7.1.0",
+    "istanbul": "^0.4.5",
     "lodash": "^4.17.4",
     "md5": "^2.2.1",
-    "mime": "^1.3.6"
+    "mime": "^1.3.6",
+    "sinon": "^3.2.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^3.5.0",
+    "sinon-chai": "^2.13.0"
   }
 }
