@@ -3,10 +3,6 @@ const md5 = require('md5');
 const AWS = require('aws-sdk');
 const got = require('got');
 const mime = require('mime');
-const {
-	parse
-} = require('url');
-
 const parsers = require('./parsers');
 
 AWS.config.setPromisesDependency(Promise);
@@ -21,28 +17,31 @@ const bucket = process.env.BUCKET || 'static.smallorange.co';
 
 exports.handler = (event, context, callback) => {
 	const {
-		url,
+		base64 = true,
+		folder = null,
+		id = null,
 		parser = null,
-		base64 = true
+		src
 	} = event;
-
-	const {
-		path
-	} = parse(url);
 	
 	const parserFn = parsers[parser] || _.identity;
-	const hash = md5(path + parser + base64);
-	const splitted = url.split('.');
-	const extension = splitted.length ? _.last(splitted) : null;
+	const hash = id || md5(base64 + folder + parser + src);
+	const splitted = src.split('.');
+	const extension = splitted.length ? _.last(splitted).substring(0, 3) : null;
 	const contentType = extension ? mime.lookup(extension) : 'application/octet-stream';
-	const key = extension ? `${hash}.${extension}` : hash;
+	
+	let key = extension ? `${hash}.${extension}` : hash;
+
+	if(folder) {
+		key = `${folder}/${key}`;
+	}
 
 	const returnsError = err => callback(err);
 	const returns = data => callback(null, base64 ? data.toString('base64') : data.toString());
 
 	s3.getObject({
 			Bucket: bucket,
-			Key: `cache/proxy/${key}`
+			Key: `proxy/${key}`
 		})
 		.promise()
 		.then(({
@@ -50,7 +49,7 @@ exports.handler = (event, context, callback) => {
 		}) => Body)
 		.catch(err => {
 			if (err.name === 'NoSuchKey') {
-				return got(url, {
+				return got(src, {
 						encoding: null
 					})
 					.then(({
@@ -68,7 +67,7 @@ exports.handler = (event, context, callback) => {
 					.then(body => {	
 						return s3.putObject({
 								Bucket: bucket,
-								Key: `cache/proxy/${key}`,
+								Key: `proxy/${key}`,
 								Body: body,
 								ContentType: contentType
 							})
@@ -85,8 +84,10 @@ exports.handler = (event, context, callback) => {
 
 if (process.env.NODE_ENV !== 'production') {
 		exports.handler({
-			url: 'http://static.smallorange.co/svg/noun_1113211_cc.svg',
-			parser: 'svg',
+			src: 'https://d30y9cdsu7xlg0.cloudfront.net/noun-svg/1610.svg?Expires=1504795969&Signature=MA~gzzJ9-vxx37leSAq9kcij~nRaUmMapioDFLqt7wc7DudoHg-iw65PN0RISk~Wj2gIi8Elgs2cqd3n8wqCDuSk8HaOWks9q~itPvB-9dTSbQSIl0j8L2lHi-1KTdNxlNuWN8qIwc0uMhd9T3O143c8jUY~P~OvMjiJnyC4rV0_&Key-Pair-Id=APKAI5ZVHAXN65CHVU2Q',
+			parser: 'svgWithFill',
+			folder: 'icons/noun',
+			id: 'bbq',
 			base64: false
 		}, null, console.log);
 }

@@ -1,5 +1,5 @@
-const svg = require('./svg');
+const svgWithFill = require('./svgWithFill');
 
 module.exports = {
-	svg
+	svgWithFill
 };
