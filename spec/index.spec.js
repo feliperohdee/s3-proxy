@@ -140,7 +140,7 @@ describe('index.js', () => {
 					id: 'id'
 				})
 				.then(() => {
-					expect(proxy.parseResponse).to.have.been.calledWithExactly(new Buffer('body'), true);
+					expect(proxy.parseResponse).to.have.been.calledWithExactly(new Buffer('body'), true, false);
 
 					done();
 				});
@@ -154,10 +154,48 @@ describe('index.js', () => {
 					base64: false
 				})
 				.then(() => {
-					expect(proxy.parseResponse).to.have.been.calledWithExactly(new Buffer('body'), false);
+					expect(proxy.parseResponse).to.have.been.calledWithExactly(new Buffer('body'), false, false);
 
 					done();
 				});
+		});
+
+		describe('json', () => {
+			beforeEach(() => {
+				s3.getObject = sinon.stub().returns({
+					promise: () => Promise.resolve({
+						Body: new Buffer('{"html":"body-3"}')
+					})
+				})
+			});
+
+			it('should call s3.getObject as json', () => {
+				proxy.get({
+					json: true,
+					src: 'src.png',
+					folder: 'folder',
+					id: 'id'
+				});
+
+				expect(s3.getObject).to.have.been.calledWithExactly({
+					Bucket: 'bucket',
+					Key: 'folder/id.json'
+				});
+			});
+
+			it('should call parseResponse with base64 = true, json = true', done => {
+				proxy.get({
+						json: true,
+						src: 'src.png',
+						folder: 'folder',
+						id: 'id'
+					})
+					.then(response => {
+						expect(proxy.parseResponse).to.have.been.calledWithExactly(new Buffer('{"html":"body-3"}'), true, true);
+
+						done();
+					});
+			});
 		});
 
 		describe('with cached response', () => {
@@ -176,7 +214,7 @@ describe('index.js', () => {
 			});
 
 			describe('getObject error', () => {
-				beforeEach(() => {					
+				beforeEach(() => {
 					s3.getObject = sinon.stub().returns({
 						promise: () => Promise.reject(new Error())
 					});
@@ -253,22 +291,6 @@ describe('index.js', () => {
 					});
 			});
 
-			it('should transform parser\'s string object into string', done => {
-				proxy.get({
-						src: 'src.png',
-						folder: 'folder',
-						id: 'id',
-						parser: 'parser3'
-					})
-					.then(response => {
-						const [args] = s3.putObject.getCall(0).args;
-
-						expect(args.Body.toString()).to.equal('{"html":"body-3"}');
-
-						done();
-					});
-			});
-
 			it('should not call parser if inexistent', done => {
 				proxy.get({
 						src: 'src.png',
@@ -304,8 +326,47 @@ describe('index.js', () => {
 					});
 			});
 
+			describe('json', () => {
+				it('should transform parser\'s object response into string', done => {
+					proxy.get({
+							json: true,
+							src: 'src.png',
+							folder: 'folder',
+							id: 'id',
+							parser: 'parser3'
+						})
+						.then(response => {
+							const [args] = s3.putObject.getCall(0).args;
+
+							expect(args.Body.toString()).to.equal('{"html":"body-3"}');
+
+							done();
+						});
+				});
+
+				it('should call s3.putObject', done => {
+					proxy.get({
+							json: true,
+							src: 'src.png',
+							folder: 'folder',
+							id: 'id',
+							parser: 'parser3'
+						})
+						.then(() => {
+							expect(s3.putObject).to.have.been.calledWithExactly({
+								Bucket: 'bucket',
+								Key: 'folder/id.json',
+								Body: new Buffer('{"html":"body-3"}'),
+								ContentType: 'application/json'
+							});
+
+							done();
+						});
+				});
+			});
+
 			describe('putObject error', () => {
-				beforeEach(() => {					
+				beforeEach(() => {
 					s3.putObject = sinon.stub().returns({
 						promise: () => Promise.reject(new Error())
 					});
@@ -326,7 +387,7 @@ describe('index.js', () => {
 			});
 
 			describe('got error', () => {
-				beforeEach(() => {					
+				beforeEach(() => {
 					proxy.got = sinon.stub().rejects();
 				});
 
@@ -349,6 +410,16 @@ describe('index.js', () => {
 
 		it('should parse as normal string', () => {
 			expect(proxy.parseResponse(new Buffer('body'), false)).to.equal('body');
+		});
+
+		it('should parse as json', () => {
+			expect(proxy.parseResponse(new Buffer('{"html": "body-3"}'), true, true)).to.deep.equal({
+				html: 'body-3'
+			});
+		});
+
+		it('should parse json with error as string', () => {
+			expect(proxy.parseResponse(new Buffer('{"html":body-3"}'), true, true)).to.equal('{"html":body-3"}');
 		});
 	});
 });

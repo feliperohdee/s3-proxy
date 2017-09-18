@@ -22,6 +22,7 @@ module.exports = class S3Proxy {
 	get(args = {}) {
 		const {
 			base64 = true,
+			json = false,
 			folder = null,
 			id = null,
 			parser = null,
@@ -35,8 +36,8 @@ module.exports = class S3Proxy {
 		const parserFn = this.parsers[parser] || _.identity;
 		const hash = id || md5(base64 + parser + src);
 		const splitted = src.split('.');
-		const extension = splitted.length ? _.last(splitted).substring(0, 3) : null;
-		const contentType = extension ? mime.lookup(extension) : 'application/octet-stream';
+		const extension = json ? 'json' : (splitted.length ? _.last(splitted).substring(0, 3) : null);
+		const contentType = json ? 'application/json' : (extension ? mime.lookup(extension) : 'application/octet-stream');
 
 		let key = extension ? `${hash}.${extension}` : hash;
 
@@ -62,7 +63,7 @@ module.exports = class S3Proxy {
 					.then(body => {
 						body = parserFn(body.toString());
 
-						if (_.isObject(body) && !_.isBuffer(body)) {
+						if (json) {
 							body = JSON.stringify(body);
 						}
 
@@ -84,10 +85,18 @@ module.exports = class S3Proxy {
 							.catch(() => body);
 					});
 			})
-			.then(response => this.parseResponse(response, base64));
+			.then(response => this.parseResponse(response, base64, json));
 	}
 
-	parseResponse(data, base64 = true) {
+	parseResponse(data, base64 = true, json = false) {
+		if(json) {
+			try {
+				return JSON.parse(data.toString());
+			} catch(err) {
+				return data.toString();
+			}
+		}
+
 		return base64 ? data.toString('base64') : data.toString();
 	}
 }
