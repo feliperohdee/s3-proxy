@@ -62,6 +62,10 @@ module.exports = class S3Proxy {
 					.then(body => {
 						body = parserFn(body.toString());
 
+						if (_.isObject(body) && !_.isBuffer(body)) {
+							body = JSON.stringify(body);
+						}
+
 						if (_.isString(body)) {
 							return new Buffer(body);
 						}

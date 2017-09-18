@@ -18,7 +18,10 @@ describe('index.js', () => {
 	beforeEach(() => {
 		parsers = {
 			parser1: sinon.stub().callsFake(body => new Buffer(`${body}-1`)),
-			parser2: sinon.stub().callsFake(body => `${body}-2`)
+			parser2: sinon.stub().callsFake(body => `${body}-2`),
+			parser3: sinon.stub().callsFake(body => ({
+				html: `${body}-3`
+			}))
 		};
 
 		s3 = {
@@ -245,6 +248,22 @@ describe('index.js', () => {
 						const [args] = s3.putObject.getCall(0).args;
 
 						expect(_.isBuffer(args.Body)).to.be.true;
+
+						done();
+					});
+			});
+
+			it('should transform parser\'s string object into string', done => {
+				proxy.get({
+						src: 'src.png',
+						folder: 'folder',
+						id: 'id',
+						parser: 'parser3'
+					})
+					.then(response => {
+						const [args] = s3.putObject.getCall(0).args;
+
+						expect(args.Body.toString()).to.equal('{"html":"body-3"}');
 
 						done();
 					});
