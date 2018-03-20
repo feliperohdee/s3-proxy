@@ -37,7 +37,7 @@ module.exports = class S3Proxy {
 		const hash = id || md5(base64 + parser + src);
 		const splitted = src.split('.');
 		const extension = json ? 'json' : (splitted.length ? _.last(splitted).substring(0, 3) : null);
-		const contentType = json ? 'application/json' : (extension ? mime.lookup(extension) : 'application/octet-stream');
+		const contentType = json ? 'application/json' : (extension ? mime.getType(extension) : 'application/octet-stream');
 
 		let key = extension ? `${hash}.${extension}` : hash;
 
