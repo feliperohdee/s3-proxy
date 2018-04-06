@@ -36,7 +36,7 @@ module.exports = class S3Proxy {
 		const parserFn = this.parsers[parser] || _.identity;
 		const hash = id || md5(base64 + parser + src);
 		const splitted = src.split('.');
-		const extension = json ? 'json' : (splitted.length ? _.last(splitted).substring(0, 3) : null);
+		const extension = json ? 'json' : (splitted.length ? _.last(splitted) : null);
 		const contentType = json ? 'application/json' : (extension ? mime.getType(extension) : 'application/octet-stream');
 
 		let key = extension ? `${hash}.${extension}` : hash;
@@ -58,12 +58,12 @@ module.exports = class S3Proxy {
 						encoding: null
 					})
 					.then(({
-						body
-					}) => body)
-					.then(body => {
+						body,
+						headers
+					}) => {
 						body = parserFn(body.toString());
 
-						if (json) {
+						if (json && headers['content-type'] !== 'application/json') {
 							body = JSON.stringify(body);
 						}
 

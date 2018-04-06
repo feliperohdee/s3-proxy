@@ -4,7 +4,7 @@
   "description": "Small proxy to get stuffs and copy to s3 and retrieve for there",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test ./node_modules/.bin/_mocha spec --recursive --watch --timeout 5000",
+    "test": "NODE_ENV=test ./node_modules/.bin/_mocha *.spec.js --recursive --watch --timeout 5000",
     "coverage": "NODE_ENV=test ./node_modules/.bin/istanbul cover -x *.spec.js ./node_modules/.bin/_mocha -- *.spec.js --recursive --timeout 5000",
     "deploy": "npm version patch -m 'Bump %s' && git push origin master && npm publish"
   },

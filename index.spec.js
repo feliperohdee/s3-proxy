@@ -38,7 +38,8 @@ describe('index.js', () => {
 		};
 
 		got = sinon.stub().resolves({
-			body: new Buffer('body')
+			body: new Buffer('body'),
+			headers: {}
 		});
 
 		proxy = new Proxy(s3, 'bucket', parsers);
@@ -362,6 +363,33 @@ describe('index.js', () => {
 
 							done();
 						});
+				});
+
+				describe('json source', () => {
+					beforeEach(() => {
+						proxy.got = sinon.stub().resolves({
+							body: new Buffer('{"a":1}'),
+							headers: {
+								'content-type': 'application/json'
+							}
+						});
+					});
+
+					it('should transform parser\'s object response into string', done => {
+						proxy.get({
+								json: true,
+								src: 'src.json',
+								folder: 'folder',
+								id: 'id'
+							})
+							.then(response => {
+								const [args] = s3.putObject.getCall(0).args;
+	
+								expect(args.Body.toString()).to.equal('{"a":1}');
+	
+								done();
+							});
+					});
 				});
 			});
 
