@@ -17,12 +17,11 @@ module.exports = class S3Proxy {
 		this.got = got;
 		this.bucket = bucket;
 		this.parsers = parsers;
+		this.parseResponse = this.parseResponse.bind(this);
 	}
 
 	get(args = {}) {
 		const {
-			base64 = true,
-			json = false,
 			folder = null,
 			id = null,
 			parser = null,
@@ -33,13 +32,8 @@ module.exports = class S3Proxy {
 			return Promise.reject(new Error('src missing.'));
 		}
 
-		const parserFn = this.parsers[parser] || _.identity;
-		const hash = id || md5(base64 + parser + src);
-		const splitted = src.split('.');
-		const extension = json ? 'json' : (splitted.length ? _.last(splitted) : null);
-		const contentType = json ? 'application/json' : (extension ? mime.getType(extension) : 'application/octet-stream');
-
-		let key = extension ? `${hash}.${extension}` : hash;
+		let parserFn = this.parsers[parser] || _.identity;
+		let key = id || md5(parser + src);
 
 		if (folder) {
 			key = `${folder}/${key}`;
@@ -51,8 +45,12 @@ module.exports = class S3Proxy {
 			})
 			.promise()
 			.then(({
-				Body
-			}) => Body)
+				Body,
+				ContentType
+			}) => ({
+				body: Body,
+				contentType: ContentType
+			}))
 			.catch(err => {
 				return this.got(src, {
 						encoding: null
@@ -61,19 +59,29 @@ module.exports = class S3Proxy {
 						body,
 						headers
 					}) => {
-						body = parserFn(body.toString());
+						let contentType = headers['content-type'];
+						let isJson = contentType === 'application/json';
 
-						if (json && headers['content-type'] !== 'application/json') {
+						body = parserFn(body.toString(), contentType);;
+
+						if (_.isObject(body) && !_.isBuffer(body) && !isJson) {
 							body = JSON.stringify(body);
+							contentType = 'application/json';
 						}
 
 						if (_.isString(body)) {
-							return new Buffer(body);
+							body = new Buffer(body);
 						}
 
-						return body;
+						return {
+							body,
+							contentType
+						};
 					})
-					.then(body => {
+					.then(({
+						body,
+						contentType
+					}) => {
 						return this.s3.putObject({
 								Bucket: this.bucket,
 								Key: key,
@@ -81,22 +89,39 @@ module.exports = class S3Proxy {
 								ContentType: contentType
 							})
 							.promise()
-							.then(() => body)
-							.catch(() => body);
+							.then(() => ({
+								body,
+								contentType
+							}))
+							.catch(() => ({
+								body,
+								contentType
+							}));
 					});
 			})
-			.then(response => this.parseResponse(response, base64, json));
+			.then(this.parseResponse);
 	}
 
-	parseResponse(data, base64 = true, json = false) {
-		if(json) {
+	parseResponse(response) {
+		let {
+			body,
+			contentType
+		} = response;
+
+		if(contentType === 'application/json') {
 			try {
-				return JSON.parse(data.toString());
+				body = JSON.parse(body.toString());
 			} catch(err) {
-				return data.toString();
+				body = body.toString();
+				contentType = 'text/plain';
 			}
+		} else {
+			body = body.toString();
 		}
 
-		return base64 ? data.toString('base64') : data.toString();
+		return {
+			body,
+			contentType
+		};
 	}
 }

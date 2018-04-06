@@ -25,7 +25,6 @@ Small proxy to get stuffs and copy to s3 and retrieve for there
 
 		proxy.get({
 			src: 'https://s.cdpn.io/3/kiwi.svg',
-			base64: true,
 			folder: 'proxyFolder',
 			//parser: 'parser-1',
 			//id: 'optionalId'
