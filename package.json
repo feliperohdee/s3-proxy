@@ -1,6 +1,6 @@
 {
   "name": "smallorange-s3-proxy",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Small proxy to get stuffs and copy to s3 and retrieve for there",
   "main": "index.js",
   "scripts": {
