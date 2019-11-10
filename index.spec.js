@@ -17,7 +17,7 @@ describe('index.js', () => {
 
     beforeEach(() => {
         parsers = {
-            parserBuffer: sinon.stub().callsFake(body => new Buffer(`${body}-1`)),
+            parserBuffer: sinon.stub().callsFake(body => Buffer.from(`${body}-1`)),
             parserString: sinon.stub().callsFake(body => `${body}-2`),
             parserJson: sinon.stub().callsFake(body => ({
                 html: `${body}-3`
@@ -27,7 +27,7 @@ describe('index.js', () => {
         s3 = {
             getObject: sinon.stub().returns({
                 promise: () => Promise.resolve({
-                    Body: new Buffer('body'),
+                    Body: Buffer.from('body'),
                     ContentType: 'text/plain'
                 })
             }),
@@ -39,7 +39,7 @@ describe('index.js', () => {
         };
 
         got = sinon.stub().resolves({
-            body: new Buffer('body'),
+            body: Buffer.from('body'),
             headers: {
                 'content-type': 'text/plain'
             }
@@ -149,7 +149,7 @@ describe('index.js', () => {
                 })
                 .then(() => {
                     expect(proxy.parseResponse).to.have.been.calledWithExactly({
-                        body: new Buffer('body'),
+                        body: Buffer.from('body'),
                         contentType: 'text/plain'
                     });
 
@@ -161,10 +161,10 @@ describe('index.js', () => {
             beforeEach(() => {
                 s3.getObject = sinon.stub().returns({
                     promise: () => Promise.resolve({
-                        Body: new Buffer('{"html":"body-3"}'),
+                        Body: Buffer.from('{"html":"body-3"}'),
                         ContentType: 'application/json'
                     })
-                })
+                });
             });
 
             it('should call s3.getObject as json', () => {
@@ -188,7 +188,7 @@ describe('index.js', () => {
                     })
                     .then(response => {
                         expect(proxy.parseResponse).to.have.been.calledWithExactly({
-                            body: new Buffer('{"html":"body-3"}'),
+                            body: Buffer.from('{"html":"body-3"}'),
                             contentType: 'application/json'
                         });
 
@@ -248,7 +248,7 @@ describe('index.js', () => {
 
                 s3.getObject = sinon.stub().returns({
                     promise: () => Promise.reject(err)
-                })
+                });
             });
 
             it('should call got', done => {
@@ -354,7 +354,7 @@ describe('index.js', () => {
                         expect(s3.putObject).to.have.been.calledWithExactly({
                             Bucket: 'bucket',
                             Key: 'folder/id',
-                            Body: new Buffer('body'),
+                            Body: Buffer.from('body'),
                             ContentType: 'text/plain'
                         });
 
@@ -411,7 +411,7 @@ describe('index.js', () => {
     describe('parseResponse', () => {
         it('should parse string', () => {
             expect(proxy.parseResponse({
-                body: new Buffer('body'),
+                body: Buffer.from('body'),
                 contentType: 'text/plain'
             })).to.deep.equal({
                 body: 'body',
@@ -421,7 +421,7 @@ describe('index.js', () => {
 
         it('should parse as json', () => {			
 			expect(proxy.parseResponse({
-                body: new Buffer('{"html": "body-3"}'),
+                body: Buffer.from('{"html": "body-3"}'),
                 contentType: 'application/json'
             })).to.deep.equal({
                 body: {
@@ -433,7 +433,7 @@ describe('index.js', () => {
 
         it('should parse json with error as string', () => {
             expect(proxy.parseResponse({
-                body: new Buffer('{"html": "body-3}'),
+                body: Buffer.from('{"html": "body-3}'),
                 contentType: 'application/json'
             })).to.deep.equal({
                 body: '{"html": "body-3}',

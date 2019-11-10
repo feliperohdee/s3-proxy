@@ -1,27 +1,35 @@
 {
-  "name": "smallorange-s3-proxy",
-  "version": "1.0.5",
-  "description": "Small proxy to get stuffs and copy to s3 and retrieve for there",
-  "main": "index.js",
-  "scripts": {
-    "test": "NODE_ENV=test ./node_modules/.bin/_mocha *.spec.js --recursive --watch --timeout 5000",
-    "coverage": "NODE_ENV=test ./node_modules/.bin/istanbul cover -x *.spec.js ./node_modules/.bin/_mocha -- *.spec.js --recursive --timeout 5000",
-    "deploy": "npm version patch -m 'Bump %s' && git push origin master && npm publish"
-  },
-  "author": "Felipe Rohde",
-  "license": "ISC",
-  "dependencies": {
-    "got": "^8.3.0",
-    "istanbul": "^0.4.5",
-    "lodash": "^4.17.4",
-    "md5": "^2.2.1",
-    "mime": "^2.2.0",
-    "sinon": "^4.4.6"
-  },
-  "devDependencies": {
-    "chai": "^4.1.2",
-    "mocha": "^5.0.4",
-    "sinon-chai": "^3.0.0"
-  },
-  "repository": "https://github.com/feliperohdee/smallorange-s3-proxy.git"
+    "name": "simple-s3-proxy",
+    "version": "1.0.0",
+    "description": "Small proxy to get stuffs and copy to s3 and retrieve for there",
+    "main": "index.js",
+    "scripts": {
+		"coverage": "rm -rf coverage; NODE_ENV=test nyc ./node_modules/.bin/_mocha *.spec.js --recursive --timeout 5000; rm -rf .nyc_output",
+        "deploy": "npm version patch -m 'Bump %s' && git push origin master && npm publish",
+        "eslint": "eslint . --ext .js --config node_modules/eslint-config/index.js",
+        "test": "NODE_ENV=test ./node_modules/.bin/_mocha *.spec.js --recursive --watch --timeout 5000"
+    },
+    "author": "Felipe Rohde",
+    "license": "ISC",
+    "dependencies": {
+        "got": "^8.3.0",
+        "lodash": "^4.17.4",
+        "md5": "^2.2.1"
+    },
+    "devDependencies": {
+        "chai": "^4.1.2",
+        "eslint": "^6.6.0",
+        "mocha": "^5.0.4",
+        "nyc": "^14.1.1",
+        "sinon": "^4.4.6",
+        "sinon-chai": "^3.0.0"
+    },
+	"repository": "https://github.com/feliperohdee/s3-proxy.git",
+	"nyc": {
+        "all": true,
+        "reporter": "lcov",
+        "exclude": [
+            "*.spec.js"
+        ]
+    }
 }

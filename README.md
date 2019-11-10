@@ -1,12 +1,10 @@
-[![CircleCI](https://circleci.com/gh/feliperohdee/smallorange-s3-proxy.svg?style=svg)](https://circleci.com/gh/feliperohdee/smallorange-s3-proxy)
+# Simple S3 Proxy
 
-# Small S3 Proxy
-
-Small proxy to get stuffs and copy to s3 and retrieve for there
+Simple proxy to get stuffs and copy to s3 and retrieve for there
 
 ## Sample
 		const AWS = require('aws-sdk');
-		const Proxy = require('smallorange-s3-proxy');
+		const Proxy = require('simple-s3-proxy');
 
 		AWS.config.setPromisesDependency(Promise);
 		AWS.config.update({

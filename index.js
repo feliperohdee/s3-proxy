@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const md5 = require('md5');
 const got = require('got');
-const mime = require('mime');
 
 module.exports = class S3Proxy {
 	constructor(s3, bucket, parsers = {}) {
@@ -62,7 +61,7 @@ module.exports = class S3Proxy {
 						let contentType = headers['content-type'];
 						let isJson = contentType === 'application/json';
 
-						body = parserFn(body.toString(), contentType);;
+						body = parserFn(body.toString(), contentType);
 
 						if (_.isObject(body) && !_.isBuffer(body) && !isJson) {
 							body = JSON.stringify(body);
@@ -70,7 +69,7 @@ module.exports = class S3Proxy {
 						}
 
 						if (_.isString(body)) {
-							body = new Buffer(body);
+							body = Buffer.from(body);
 						}
 
 						return {
@@ -124,4 +123,4 @@ module.exports = class S3Proxy {
 			contentType
 		};
 	}
-}
+};
